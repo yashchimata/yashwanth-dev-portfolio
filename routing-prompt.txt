@@ -1,0 +1,63 @@
+You’re my AI coding partner. I’m building an agentic AI framework that routes user input to the right agent using intent matching and confidence scoring.
+
+Here’s the architecture I want to build (based on a real system someone shared with me):
+
+⸻
+
+🔧 System Overview:
+
+Routing Flow:
+	1.	User input is embedded using MiniLM
+	2.	Embedding is compared to pre-stored intent vectors in ChromaDB
+	3.	A confidence score is calculated for each potential agent
+	4.	Routing decision:
+	•	If confidence is high → route to matching agent via registry
+	•	If low or ambiguous → forward to a Clarifier agent
+	•	Clarifier reformulates input or summarizes recent context
+	•	Retries routing once
+	•	If still ambiguous → fallback prompt to user
+
+Agent Structure:
+	•	Each agent extends a base Agent class
+	•	Implements:
+	•	accept_task() — rule-based (tags + regex filters)
+	•	execute() — performs the task
+	•	All agents self-register with a central Agent Registry
+
+Caching & State:
+	•	Cache results using input hash + agent ID
+	•	Use SQLite for lightweight logging and simulating minimal state
+	•	The system is stateless in memory but can recall prior interactions
+
+⸻
+
+🔁 Flowchart for Reference:
+[ USER INPUT ]
+      |
+      v
+[ INTENT ROUTER ]
+- Embeds input with MiniLM
+- Compares against stored intent vectors
+- Calculates confidence score
+      |
+      v
++----------------------------+
+|  CONFIDENCE SCORE CHECK   |
++----------------------------+
+   |                    |
+[High]              [Low/Ambiguous]
+   |                    |
+   v                    v
+[AGENT REGISTRY]     [CLARIFIER AGENT]
+(registered agents     - Reformulates input
+ with accept_task())   - Summarizes recent context
+                        - Retries routing once
+                         |
+                         v
+                 [Fallback to user
+                  with disambiguation prompt]
+
+        [AGENT.execute()] or [User prompt triggered]
+               |
+               v
+         [EXECUTION OUTPUT]
